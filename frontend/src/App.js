@@ -7,13 +7,15 @@ function App() {
   const [content, setContent] = useState('');
   const [editId, setEditId] = useState(null);
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     fetchDiaries();
   }, []);
 
   const fetchDiaries = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/diaries');
+      const response = await axios.get(`${API_URL}/diaries`);
       setDiaries(response.data);
     } catch (error) {
       console.error('Error fetching diaries', error);
@@ -22,7 +24,7 @@ function App() {
 
   const handleCreateDiary = async () => {
     try {
-      await axios.post('http://localhost:5000/diaries', { title, content });
+      await axios.post(`${API_URL}/diaries`, { title, content });
       setTitle('');
       setContent('');
       fetchDiaries();
@@ -33,7 +35,7 @@ function App() {
 
   const handleUpdateDiary = async () => {
     try {
-      await axios.put(`http://localhost:5000/diaries/${editId}`, { title, content });
+      await axios.put(`${API_URL}/diaries/${editId}`, { title, content });
       setTitle('');
       setContent('');
       setEditId(null);
@@ -45,7 +47,7 @@ function App() {
 
   const handleDeleteDiary = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/diaries/${id}`);
+      await axios.delete(`${API_URL}/diaries/${id}`);
       fetchDiaries();
     } catch (error) {
       console.error('Error deleting diary', error);
