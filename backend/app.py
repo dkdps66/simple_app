@@ -5,10 +5,17 @@ import boto3
 app = Flask(__name__)
 CORS(app)
 
-session = boto3.Session(profile_name='mfa')
-dynamodb = session.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('diaries')
-next_id = 1
+
+def get_next_id():
+    response = table.scan()
+    if 'Items' in response and len(response['Items']) > 0:
+        ids = max([item['id'] for item in response['Items']])
+        return ids + 1
+    return 1
+
+next_id = get_next_id()
 
 @app.route("/diaries", methods=['GET'])
 def get_diaries():
