@@ -41,7 +41,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}                           # GitHub SHA를 이미지 태그로 사용
         run: |
           # 도커 컨테이너 빌드 및 Amazon ECR로 푸시
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG backend/
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
