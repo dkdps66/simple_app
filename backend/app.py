@@ -76,6 +76,11 @@ def delete_diary(diary_id):
     return jsonify(diary)
 
 # /로 들어오면 get_diaries 함수 실행
-@app.route("/")
+@app.route("/", methods=['GET'])
 def hello():
     return get_diaries()
+
+# /health로 들어오면 OK 반환
+@app.route("/health", methods=['GET'])
+def health():
+    return "OK"
