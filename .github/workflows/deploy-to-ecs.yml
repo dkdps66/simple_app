@@ -10,7 +10,7 @@ env:
   ECR_REPOSITORY: simple-flask-app           # Amazon ECR 저장소 이름 설정
   ECS_SERVICE: flask-service                 # Amazon ECS 서비스 이름 설정
   ECS_CLUSTER: seoul-cluster                 # Amazon ECS 클러스터 이름 설정
-  ECS_TASK_DEFINITION: flask-task # Amazon ECS 태스크 정의 파일 경로 설정, 예: .aws/task-definition.json
+  ECS_TASK_DEFINITION: simple-flask # Amazon ECS 태스크 정의 파일 경로 설정, 예: .aws/task-definition.json
   CONTAINER_NAME: flask           # 태스크 정의의 containerDefinitions 섹션에 있는 컨테이너 이름 설정
 
 jobs:
