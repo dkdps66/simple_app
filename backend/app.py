@@ -74,3 +74,8 @@ def delete_diary(diary_id):
     table.delete_item(Key={'id': diary_id})
     
     return jsonify(diary)
+
+# /로 들어오면 get_diaries 함수 실행
+@app.route("/")
+def hello():
+    return get_diaries()
