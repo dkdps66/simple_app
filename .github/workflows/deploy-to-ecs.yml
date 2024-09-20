@@ -1,0 +1,62 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AWS_REGION: ap-northeast-2                  # 선호하는 AWS 리전 설정, 예: us-west-1
+  ECR_REPOSITORY: simple-flask-app           # Amazon ECR 저장소 이름 설정
+  ECS_SERVICE: flask-service                 # Amazon ECS 서비스 이름 설정
+  ECS_CLUSTER: seoul-cluster                 # Amazon ECS 클러스터 이름 설정
+  ECS_TASK_DEFINITION: flask-task # Amazon ECS 태스크 정의 파일 경로 설정, 예: .aws/task-definition.json
+  CONTAINER_NAME: flask           # 태스크 정의의 containerDefinitions 섹션에 있는 컨테이너 이름 설정
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production                  # 배포 환경을 production으로 설정
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4            # 소스 코드 체크아웃
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@0e613a0980cbf65ed5b322eb7a1e075d28913a83 # AWS 자격 증명 구성
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}     # GitHub 비밀에 저장된 AWS Access Key 사용
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # GitHub 비밀에 저장된 AWS Secret Key 사용
+          aws-region: ${{ env.AWS_REGION }}                       # 설정된 AWS 리전 사용
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a # Amazon ECR 로그인
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  # Amazon ECR 레지스트리
+          IMAGE_TAG: ${{ github.sha }}                           # GitHub SHA를 이미지 태그로 사용
+        run: |
+          # 도커 컨테이너 빌드 및 Amazon ECR로 푸시
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc # 새로운 이미지 ID로 ECS 태스크 정의 업데이트
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }} # 설정된 ECS 태스크 정의 경로 사용
+          container-name: ${{ env.CONTAINER_NAME }}       # 컨테이너 이름 설정
+          image: ${{ steps.build-image.outputs.image }}   # 빌드된 이미지 사용
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a # Amazon ECS에 태스크 정의 배포
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }} # 업데이트된 태스크 정의 사용
+          service: ${{ env.ECS_SERVICE }}        # ECS 서비스 이름 설정
+          cluster: ${{ env.ECS_CLUSTER }}        # ECS 클러스터 이름 설정
+          wait-for-service-stability: true       # 서비스 안정성 확인 대기
